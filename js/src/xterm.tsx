@@ -100,7 +100,11 @@ export class GoTTYXterm {
         document.title = title;
     };
 
-    setPreferences(value: Record<string, unknown>) {
+    setPreferences(value?: Record<string, unknown> | null) {
+        if (!value) {
+            return;
+        }
+
         Object.keys(value).forEach((key) => {
             switch (key) {
                 case "EnableWebGL":

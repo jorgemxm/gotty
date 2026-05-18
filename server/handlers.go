@@ -271,7 +271,7 @@ func (server *Server) handleThemes(w http.ResponseWriter, r *http.Request) {
 // Only non-zero values are included so xterm.js keeps its defaults for the rest.
 func (server *Server) buildPreferences() map[string]interface{} {
 	if server.options.Preferences == nil {
-		return nil
+		return map[string]interface{}{}
 	}
 
 	prefs := server.options.Preferences
