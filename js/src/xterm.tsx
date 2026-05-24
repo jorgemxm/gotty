@@ -31,6 +31,8 @@ export class GoTTYXterm {
         this.elem = elem;
         this.term = new Terminal({
             allowProposedApi: true,
+            customGlyphs: true,
+            rescaleOverlappingGlyphs: true,
         });
 
         const unicode11Addon = new Unicode11Addon();
@@ -60,6 +62,13 @@ export class GoTTYXterm {
         };
 
         this.term.open(elem);
+
+        try {
+            this.term.loadAddon(new WebglAddon());
+        } catch (e) {
+            console.warn("WebGL renderer failed to load, using canvas fallback", e);
+        }
+
         this.term.focus();
         this.resizeListener();
 
@@ -116,18 +125,23 @@ export class GoTTYXterm {
             return;
         }
 
-        Object.keys(value).forEach((key) => {
+        // Apply font settings first so the renderer initializes with the
+        // correct font metrics before any renderer-specific logic.
+        const keys = Object.keys(value);
+        const fontKeys = keys.filter(k => k === "font-family" || k === "font-size");
+        const otherKeys = keys.filter(k => k !== "font-family" && k !== "font-size");
+
+        for (const key of [...fontKeys, ...otherKeys]) {
             switch (key) {
-                case "EnableWebGL":
-                    if (value[key]) {
-                        this.term.loadAddon(new WebglAddon());
-                    }
+                case "font-family":
+                    this.term.options.fontFamily = value[key] as string;
                     break;
                 case "font-size":
                     this.term.options.fontSize = value[key] as number;
                     break;
-                case "font-family":
-                    this.term.options.fontFamily = value[key] as string;
+                case "EnableWebGL":
+                    // Already loaded by default in constructor — skip to avoid
+                    // orphaning the first WebglAddon with a duplicate.
                     break;
                 case "cursor-blink":
                     this.term.options.cursorBlink = value[key] as boolean;
@@ -142,7 +156,7 @@ export class GoTTYXterm {
                     this.term.options.theme = value[key] as object;
                     break;
             }
-        });
+        }
     };
 
     sendInput(data: Uint8Array) {
