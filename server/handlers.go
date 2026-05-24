@@ -118,6 +118,7 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	// when the browser tab is in the background (where JS timers are throttled).
 	pingInterval := server.options.PingInterval
 	if pingInterval > 0 {
+		conn.SetReadDeadline(time.Now().Add(time.Duration(pingInterval) * 2 * time.Second))
 		conn.SetPongHandler(func(string) error {
 			return conn.SetReadDeadline(time.Now().Add(time.Duration(pingInterval) * 2 * time.Second))
 		})
@@ -129,7 +130,6 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 			for {
 				select {
 				case <-ticker.C:
-					conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 					if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
 						return
 					}
